@@ -1,0 +1,1349 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>											                 	//divisão no centro da tela (110) total 220 posições.
+#include <conio.h>
+#include <windows.h>
+#include <locale.h>
+#include <ctype.h>
+
+#define USUARIOS 10
+#define T_USUARIOS 21
+#define T_SENHAS 12
+
+
+
+void gotoxy(int x, int y);
+void Limpa_linha(int x, int y, int quant_Espacos);
+int inter_M(int x, int y, int esc);
+void cores(int cor);
+void loading(int x, int y, int esp);
+void inter_C(int x, int y, char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS], int indice);
+int valid_user(char usuario[21], int x, int y, char USERS[USUARIOS][T_USUARIOS]);
+int valid_pass(char senha[12], int x, int y);
+void inter_L(int x, int y, char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]);
+void mostrar(char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]);
+char* validar_tamanho(int x, int y);
+void salvar_dados(char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]);
+int usuario_existe(char USERS[USUARIOS][T_USUARIOS], const char* usuario);
+int inter_ADM(int x, int y, char permitidos[USUARIOS][T_USUARIOS], char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]);
+int troca_senha(int x, int y, char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]);
+void Limpa_buffer();
+int permitir(int x, int y, char permitidos[USUARIOS][T_USUARIOS], char USERS[USUARIOS][T_USUARIOS]);
+int alterar_usuario(int x, int y, char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]);
+int usuario_permitido(char permitidos[USUARIOS][T_USUARIOS], const char* usuario);
+int excluir_usuario(int x, int y, char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]);
+void cifra_cesar(char *texto, int deslocamento);
+void decifra_cesar(char *texto, int deslocamento);
+void carregar_dados(char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]);
+int validar_permissao(int x, int y, char permitidos[USUARIOS][T_USUARIOS]);
+
+
+
+
+
+
+
+
+
+
+
+
+int validar_permissao(int x, int y, char permitidos[USUARIOS][T_USUARIOS]){
+char usuario[T_USUARIOS];
+int valid = 0;
+
+
+    gotoxy(x, y);
+    printf("________________________________________ \n");
+    gotoxy(x, y + 1);
+    printf("|        VERIFICAÇÃO DE PERMISSÃO       |\n");
+    gotoxy(x, y + 2);
+    printf("|_______________________________________|\n");
+    gotoxy(x, y + 3);
+    printf("|                                       |\n");
+    gotoxy(x, y + 4);
+    printf("|                                       |\n");
+    gotoxy(x, y + 5);
+    printf("|_______________________________________|\n");
+    gotoxy(x, y + 6);
+    printf("|                                       |\n");
+    gotoxy(x, y + 7);
+    printf("|                                       |\n");
+    gotoxy(x, y + 8);
+    printf("|_______________________________________|\n");
+
+    Limpa_buffer();
+    gotoxy(x + 1, y + 6);
+    printf("Informe o nome do usuário.");
+    gotoxy(x + 1, y + 4);
+    fgets(usuario, sizeof(usuario), stdin);
+    usuario[strcspn(usuario, "\n")] = '\0'; // Remove o '\n'
+    Limpa_linha(x + 1, y + 6, 38);
+    Limpa_linha(x + 1, y + 4, 38);
+    loading(x + 1, y + 4, 38);
+
+    for(int i = 0; i < T_USUARIOS; i ++){
+        if(strcmp(permitidos[i], usuario) == 0) {
+          gotoxy(x + 1, y + 6);
+          printf("Usuário autorizado.");
+          Sleep(1500);
+          Limpa_linha(x + 1, y + 6, 38);
+          return 0;
+        }
+    }
+        gotoxy(x + 1, y + 6);
+        printf("Você não possui permissão para acessar");
+        gotoxy(x + 1, y + 7);
+        printf("esse campo.");
+        Sleep(1500);
+        Limpa_linha(x + 1, y + 6, 38);
+        return 1;
+
+
+
+
+
+}
+
+
+void decifra_cesar(char *texto, int deslocamento) {
+    cifra_cesar(texto, 26 - deslocamento); // Desloca na direção oposta
+}
+
+void cifra_cesar(char *texto, int deslocamento) {
+    for (int i = 0; texto[i] != '\0'; i++) {
+        char ch = texto[i];
+
+        // Verifica se o caractere é uma letra
+        if (isalpha(ch)) {
+            char base = islower(ch) ? 'a' : 'A'; // Base para letras minúsculas ou maiúsculas
+            // Aplica o deslocamento
+            ch = (ch - base + deslocamento) % 26 + base;
+        }
+
+        texto[i] = ch; // Atualiza o caractere
+    }
+}
+
+int excluir_usuario(int x, int y, char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]) {
+    char usuario[T_USUARIOS];
+    int usuario_encontrado = 0;
+
+
+    gotoxy(x, y);
+    printf("________________________________________ \n");
+    gotoxy(x, y + 1);
+    printf("|             EXCLUIR USUÁRIO           |\n");
+    gotoxy(x, y + 2);
+    printf("|_______________________________________|\n");
+    gotoxy(x, y + 3);
+    printf("|                                       |\n");
+    gotoxy(x, y + 4);
+    printf("|                                       |\n");
+    gotoxy(x, y + 5);
+    printf("|_______________________________________|\n");
+    gotoxy(x, y + 6);
+    printf("|                                       |\n");
+    gotoxy(x, y + 7);
+    printf("|                                       |\n");
+    gotoxy(x, y + 8);
+    printf("|_______________________________________|\n");
+
+
+    gotoxy(x + 1, y + 6);
+    printf("Informe o nome do usuário");
+    gotoxy(x + 1, y + 7);
+    printf("a ser excluído.");
+    gotoxy(x + 1, y + 4);
+    fgets(usuario, sizeof(usuario), stdin);
+    usuario[strcspn(usuario, "\n")] = '\0'; // Remove o '\n'
+    Limpa_linha(x + 1, y + 6, 38);
+    Limpa_linha(x + 1, y + 7, 38);
+    Limpa_linha(x + 1, y + 4, 38);
+
+    // Verifica se o usuário existe e o exclui
+    for (int i = 0; i < USUARIOS; i++) {
+        if (strcmp(USERS[i], usuario) == 0) {
+            usuario_encontrado = 1;
+            // Limpa os dados do usuário encontrado
+            strcpy(USERS[i], ""); // Limpa o nome do usuário
+            strcpy(SENHAS[i], ""); // Limpa a senha correspondente
+            gotoxy(x + 1, y + 7);
+            printf("Usuário %s excluído com sucesso!\n", usuario);
+            Sleep(1500);
+            salvar_dados(USERS, SENHAS); // Atualiza os dados no arquivo
+            break;
+        }
+    }
+
+    if (!usuario_encontrado) {
+        gotoxy(x + 1, y + 7);
+        printf("Usuário não encontrado!\n");
+        Sleep(1500);
+        Limpa_linha(x + 1, y + 7, 38);
+    }
+
+    return 0;
+}
+
+int usuario_permitido(char permitidos[USUARIOS][T_USUARIOS], const char* usuario) {
+    for (int i = 0; i < USUARIOS; i++) {
+        if (strcmp(permitidos[i], usuario) == 0) {
+            return 1; // Usuário permitido
+        }
+    }
+    return 0; // Usuário não permitido
+}
+
+void Limpa_buffer() {
+    while (getchar() != '\n'); // Limpa o buffer até encontrar uma nova linha
+}
+
+int troca_senha(int x, int y, char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]){
+
+char u[T_USUARIOS];
+char nova_senha[T_SENHAS];
+int p = 0;
+
+cores(12);
+gotoxy(x,y);
+printf("________________________________________ \n");
+gotoxy(x,y + 1);
+printf("|           ALTERAÇÃO DE SENHA          |\n");
+gotoxy(x,y + 2);
+printf("|_______________________________________|\n");
+gotoxy(x,y + 3);
+printf("|                                       |\n");
+gotoxy(x,y + 4);
+printf("|                                       |\n");
+gotoxy(x,y + 5);
+printf("|                USUÁRIO                |\n");
+gotoxy(x,y + 6);
+printf("|                                       |\n");
+gotoxy(x,y + 7);
+printf("|                                       |\n");
+gotoxy(x,y + 8);
+printf("|_______________________________________|\n");
+gotoxy(x,y + 9);
+printf("|                                       |\n");
+gotoxy(x,y + 10);
+printf("|                                       |\n");
+gotoxy(x,y + 11);
+printf("|_______________________________________|\n");
+gotoxy(x,y + 12);
+printf("|                                       |\n");
+gotoxy(x,y + 13);
+printf("|                                       |\n");
+gotoxy(x,y + 14);
+printf("|                                       |\n");
+gotoxy(x,y + 15);
+printf("|                                       |\n");
+gotoxy(x,y + 16);
+printf("|_______________________________________| \n");
+
+
+    gotoxy(x + 1, y + 14);
+    printf("Informe o usuário.");
+    gotoxy(x + 1, y + 10);
+    fgets(u, sizeof(u), stdin);
+    u[strcspn(u, "\n")] = '\0'; // Remove o '\n'
+    Limpa_linha(x + 1, y + 14, 38);
+    Limpa_linha(x + 1, y + 10, 38);
+    loading(x + 1, y + 15, 32);
+
+    // Verifica se o usuário existe
+    int usuario_encontrado = 0;
+    for (int i = 0; i < USUARIOS; i++) {
+        if (strcmp(USERS[i], u) == 0) {
+            usuario_encontrado = 1;
+            p = i;
+            break;
+        }
+    }
+
+    if (!usuario_encontrado) {
+        Limpa_linha(x + 1, y + 10, 38);
+        gotoxy(x + 1, y + 14);
+        printf("Usuário não encontrado!");
+        Sleep(1000);
+        Limpa_linha(x + 1, y + 14, 38);
+        return 1; // Retorna 1 se o usuário não for encontrado
+    }
+
+    // Solicita a nova senha
+    do {
+        Limpa_linha(x + 1, y + 14, 38);
+        Limpa_linha(x + 1, y + 10, 38);
+        Limpa_linha(x + 1, y + 15, 38);
+        gotoxy(x + 1, y + 14);
+        printf("Digite a nova senha.");
+        gotoxy(x + 1, y + 10);
+        fgets(nova_senha, sizeof(nova_senha), stdin);
+        nova_senha[strcspn(nova_senha, "\n")] = '\0'; // Remove o '\n'
+        Limpa_linha(x + 1, y + 14, 38);
+        Limpa_linha(x + 1, y + 10, 38);
+        loading(x + 1, y + 15, 32);
+                // Valida a nova senha
+        if (valid_pass(nova_senha, x, y) != 0) {
+            // Se a senha não for válida, exibe a mensagem de erro
+            Sleep(1500);
+        }
+
+
+    } while (valid_pass(nova_senha, x, y) != 0); // Continua até que a senha seja válida
+
+    // Verifica se a senha é igual ao usuário
+    if (strcmp(USERS[p], nova_senha) == 0) {
+        gotoxy(x + 1, y + 14);
+        printf("A senha não pode ser igual ao usuário.");
+        Sleep(1500);
+        return 1; // Retorna 1 se a senha for igual ao usuário
+    }
+
+    // Atualiza a senha
+    strcpy(SENHAS[p], nova_senha); // Atualiza a senha
+    gotoxy(x + 1, y + 14);
+    printf("Senha alterada com sucesso!");
+    Sleep(1500);
+    salvar_dados(USERS, SENHAS);
+
+    return 0; // Retorna 0 se a operação foi bem-sucedida
+}
+
+
+int permitir(int x, int y, char permitidos[USUARIOS][T_USUARIOS], char USERS[USUARIOS][T_USUARIOS]) {
+
+    char usuario[T_USUARIOS];
+
+    gotoxy(x, y);
+    printf("________________________________________ \n");
+    gotoxy(x, y + 1);
+    printf("|              PERMISSÕES               |\n");
+    gotoxy(x, y + 2);
+    printf("|_______________________________________|\n");
+    gotoxy(x, y + 3);
+    printf("|                                       |\n");
+    gotoxy(x, y + 4);
+    printf("|                                       |\n");
+    gotoxy(x, y + 5);
+    printf("|_______________________________________|\n");
+    gotoxy(x, y + 6);
+    printf("|                                       |\n");
+    gotoxy(x, y + 7);
+    printf("|                                       |\n");
+    gotoxy(x, y + 8);
+    printf("|_______________________________________|\n");
+
+    gotoxy(x + 1, y + 6);
+    printf("Informe o nome do usuário que deseja");
+    gotoxy(x + 1, y + 7);
+    printf("habilitar as permissões de ADM.");
+    gotoxy(x + 1, y + 4);
+    fgets(usuario, sizeof(usuario), stdin);
+    usuario[strcspn(usuario, "\n")] = '\0'; // Remove o '\n'
+    Limpa_linha(x + 1, y + 6, 38);
+    Limpa_linha(x + 1, y + 7, 38);
+    loading(x + 1, y + 7, 38);
+
+    // Verifica se o usuário existe
+    if (usuario_existe(USERS, usuario)) {
+        // Adiciona o usuário ao vetor de permitidos
+        for (int i = 0; i < USUARIOS; i++) {
+            if (strlen(permitidos[i]) == 0) { // Encontra um espaço vazio
+                strcpy(permitidos[i], usuario);
+                gotoxy(x + 1, y + 7);
+                printf("Permissão concedida a %s.\n", usuario);
+                Sleep(2000);
+                return 0; // Sucesso
+            }
+        }
+        gotoxy(x + 1, y + 6);
+        printf("Limite de usuários permitidos atingido.\n");
+    } else {
+        gotoxy(x + 1, y + 6);
+        printf("Usuário não encontrado.\n");
+    }
+    Sleep(2000);
+    return 1; // Falha
+}
+
+int alterar_usuario(int x, int y, char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]) {
+    char usuario_atual[T_USUARIOS];
+    char novo_usuario[T_USUARIOS];
+    char nova_senha[T_SENHAS];
+    int usuario_encontrado = 0;
+
+    gotoxy(x, y);
+    printf("________________________________________ \n");
+    gotoxy(x, y + 1);
+    printf("|          ALTERAÇÃO DE USUÁRIOS        |\n");
+    gotoxy(x, y + 2);
+    printf("|_______________________________________|\n");
+    gotoxy(x, y + 3);
+    printf("|                                       |\n");
+    gotoxy(x, y + 4);
+    printf("|                                       |\n");
+    gotoxy(x, y + 5);
+    printf("|                USUÁRIO                |\n");
+    gotoxy(x, y + 6);
+    printf("|                                       |\n");
+    gotoxy(x, y + 7);
+    printf("|                                       |\n");
+    gotoxy(x, y + 8);
+    printf("|_______________________________________|\n");
+    gotoxy(x, y + 9);
+    printf("|                                       |\n");
+    gotoxy(x, y + 10);
+    printf("|                                       |\n");
+    gotoxy(x, y + 11);
+    printf("|_______________________________________|\n");
+    gotoxy(x, y + 12);
+    printf("|                                       |\n");
+    gotoxy(x, y + 13);
+    printf("|                                       |\n");
+    gotoxy(x, y + 14);
+    printf("|                                       |\n");
+    gotoxy(x, y + 15);
+    printf("|                                       |\n");
+    gotoxy(x, y + 16);
+    printf("|_______________________________________| \n");
+
+
+    Limpa_linha(x + 1, y + 14, 38);
+    Limpa_linha(x + 1, y + 10, 38);
+    gotoxy(x + 1, y + 14);
+    printf("Informe o nome do usuário a");
+    gotoxy(x + 1, y + 15);
+    printf("ser alterado. ");
+
+    gotoxy(x + 1, y + 10);
+    fgets(usuario_atual, sizeof(usuario_atual), stdin);
+    usuario_atual[strcspn(usuario_atual, "\n")] = '\0'; // Remove o '\n'
+    Limpa_linha(x + 1, y + 14, 38);
+    Limpa_linha(x + 1, y + 15, 38);
+    Limpa_linha(x + 1, y + 10, 38);
+
+    // Verifica se o usuário existe
+    for (int i = 0; i < USUARIOS; i++) {
+        if (strcmp(USERS[i], usuario_atual) == 0) {
+            usuario_encontrado = 1;
+            // Solicita o novo nome de usuário
+            gotoxy(x + 1, y + 14);
+            printf("Informe o novo nome de usuário: ");
+            gotoxy(x + 1, y + 10);
+            fgets(novo_usuario, sizeof(novo_usuario), stdin);
+            novo_usuario[strcspn(novo_usuario, "\n")] = '\0'; // Remove o '\n'
+            Limpa_linha(x + 1, y + 14, 38);
+            Limpa_linha(x + 1, y + 10, 38);
+
+            // Valida o novo nome de usuário
+            if (valid_user(novo_usuario, 50, 10, USERS) == 0) {
+                // Atualiza o nome de usuário
+                strcpy(USERS[i], novo_usuario);
+                gotoxy(x + 1, y + 14);
+                printf("Nome de usuário alterado com sucesso!\n");
+                Sleep(1500);
+
+                // Solicita a nova senha
+                do {
+                    Sleep(1500);
+                    Limpa_linha(x + 1, y + 14, 38);
+                    Limpa_linha(x + 1, y + 15, 38);
+                    Limpa_linha(x + 1, y + 10, 38);
+                    gotoxy(x + 1, y + 14);
+                    printf("Digite a nova senha: ");
+                    gotoxy(x + 1, y + 10);
+                    fgets(nova_senha, sizeof(nova_senha), stdin);
+                    nova_senha[strcspn(nova_senha, "\n")] = '\0'; // Remove o '\n'
+                } while (valid_pass(nova_senha, 50, 10) != 0);
+
+
+                Limpa_linha(x + 1, y + 15, 38);
+                Limpa_linha(x + 1, y + 10, 38);
+
+                // Atualiza a senha
+                strcpy(SENHAS[i], nova_senha);
+                gotoxy(x + 1, y + 14);
+                printf("Senha alterada com sucesso!\n");
+                Sleep(1500);
+                salvar_dados(USERS, SENHAS);
+            } else {
+                Limpa_linha(x + 1, y + 10, 38);
+                Sleep(1500);
+            }
+            break;
+        }
+    }
+
+    if (!usuario_encontrado) {
+        Limpa_linha(x + 1, y + 4, 38);
+        Limpa_linha(x + 1, y + 6, 38);
+        Limpa_linha(x + 1, y + 7, 38);
+        gotoxy(x + 1, y + 14);
+        printf("Usuário não encontrado!\n");
+        Sleep(1500);
+    }
+
+    return 0;
+}
+
+
+int inter_ADM(int x, int y, char permitidos[USUARIOS][T_USUARIOS], char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]){
+int n;
+int escolha;
+
+cores(10);
+gotoxy(x,y);
+printf("________________________________________ \n");
+gotoxy(x,y + 1);
+printf("|              ADM CONTROL              |\n");
+gotoxy(x,y + 2);
+printf("|_______________________________________|\n");
+gotoxy(x,y + 3);
+printf("|                                       |\n");
+gotoxy(x,y + 4);
+printf("|                                       |\n");
+gotoxy(x,y + 5);
+printf("|_______________________________________|\n");
+gotoxy(x,y + 6);
+printf("|                                       |\n");
+gotoxy(x,y + 7);
+printf("|                                       |\n");
+gotoxy(x,y + 8);
+printf("|[1]CONCEDER PERMISSÃO                  |\n");
+gotoxy(x,y + 9);
+printf("|                                       |\n");
+gotoxy(x,y + 10);
+printf("|[2]ALTERAR USUÁRIO                     |\n");
+gotoxy(x,y + 11);
+printf("|                                       |\n");
+gotoxy(x,y + 12);
+printf("|[3]EXLUIR USUÁRIO                      |\n");
+gotoxy(x,y + 13);
+printf("|                                       |\n");
+gotoxy(x,y + 14);
+printf("|[4]VISUALIZAR USUÁRIOS                 |\n");
+gotoxy(x,y + 15);
+printf("|                                       |\n");
+gotoxy(x,y + 16);
+printf("|_______________________________________|\n");
+gotoxy(x,y + 17);
+printf("|                                       |\n");
+gotoxy(x,y + 18);
+printf("|_______________________________________|\n");
+
+
+
+    while (1) {
+        gotoxy(51, y + 17);
+        printf("POR FAVOR, ESCOLHA UMA OPÇÃO: ");
+
+        // Lê a entrada do usuário
+        if (scanf("%d", &escolha) != 1) {
+            Limpa_linha(51, y + 17, 38);
+            loading(51, 27, 32);
+            Limpa_linha(51, 27, 38);
+            gotoxy(51, y + 17);
+            printf("OPÇÃO INVÁLIDA!");
+            Sleep(1000);
+            Limpa_linha(51, 27, 38);
+            while (getchar() != '\n');
+            continue;
+        }
+
+        if (escolha < 1 || escolha > 4) {
+            Limpa_linha(51, 27, 38);
+            loading(51, 27, 32);
+            gotoxy(51, 27);
+            printf("OPÇÃO INVÁLIDA!");
+            Sleep(1000);
+            Limpa_linha(51, 27, 38);
+            continue;
+        }
+
+        break;
+    }
+
+    switch (escolha) {
+         case 1:
+            system("cls");
+          if((validar_permissao(50, 10, permitidos) == 0)){
+            system("cls");
+            permitir(50, 10, permitidos, USERS);
+          } else{
+            return 1;
+          }
+            break;
+         case 2:
+               system("cls");
+             if((validar_permissao(50, 10, permitidos) == 0)){
+               system("cls");
+               alterar_usuario(50, 10, USERS, SENHAS);
+            }else{
+             return 1;
+            }
+            break;
+        case 3:
+              system("cls");
+          if((validar_permissao(50, 10, permitidos) == 0)){
+              system("cls");
+              excluir_usuario(50, 10, USERS, SENHAS); // Chama a função de exclusao
+          } else {
+            return 1;
+          }
+            break;
+        case 4:
+              system("cls");
+          if((validar_permissao(50, 10, permitidos) == 0)){
+              system("cls");
+              mostrar(USERS, SENHAS);
+          } else {
+            return 1;
+          }
+            break;
+     }
+    return 0;
+}
+//------------------------------------------------------------------
+int usuario_existe(char USERS[USUARIOS][T_USUARIOS], const char* usuario) {
+    for (int i = 0; i < USUARIOS; i++) {
+        if (strcmp(USERS[i], usuario) == 0) {
+            return 1; // Retorna 1 se o usuário já existe
+        }
+    }
+    return 0; // Retorna 0 se o usuário não existe
+}
+
+//------------------------------------------------------------------
+void carregar_dados(char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]) {
+    FILE *file = fopen("D:\\usuarios.txt", "r"); // Abre o arquivo para leitura
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo para carregar os dados.\n");
+        return;
+    }
+
+    for (int i = 0; i < USUARIOS; i++) {
+        if (fscanf(file, "%s %s", USERS[i], SENHAS[i]) != 2) { // Lê usuário e senha
+            break; // Para se não houver mais dados
+        }
+
+        // Descriptografa o usuário e a senha
+        decifra_cesar(USERS[i], 3); // Deslocamento de 3
+        decifra_cesar(SENHAS[i], 3); // Deslocamento de 3
+    }
+
+    fclose(file); // Fecha o arquivo
+}
+
+//--------------------------------------------------------------
+void salvar_dados(char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]) {
+    FILE *file = fopen("D:\\usuarios.txt", "w"); // Abre o arquivo para escrita
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo para salvar os dados.\n");
+        return;
+    }
+
+    for (int i = 0; i < USUARIOS; i++) {
+        if (strlen(USERS[i]) > 0) { // Verifica se o usuário não está vazio
+            // Criptografa o usuário e a senha
+            char usuario_criptografado[T_USUARIOS];
+            char senha_criptografada[T_SENHAS];
+            strcpy(usuario_criptografado, USERS[i]);
+            strcpy(senha_criptografada, SENHAS[i]);
+            cifra_cesar(usuario_criptografado, 3); // Deslocamento de 3
+            cifra_cesar(senha_criptografada, 3);   // Deslocamento de 3
+
+            fprintf(file, "%s\n%s\n", usuario_criptografado, senha_criptografada); // Salva o usuário e a senha no arquivo
+        }
+    }
+
+    fclose(file); // Fecha o arquivo
+}
+//------------------------------------------------------------
+void mostrar(char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]) {
+    // Limpa a tela antes de mostrar os dados
+    system("cls"); // Para Windows, se estiver usando Linux, use "clear"
+
+    gotoxy(51, 5);
+    printf("________________________________________ \n");
+    gotoxy(51, 6);
+    printf("|          USUÁRIOS CADASTRADOS         |\n");
+    gotoxy(51, 7);
+    printf("|_______________________________________|\n");
+
+    int encontrado = 0; // Flag para verificar se há usuários cadastrados
+
+    for (int i = 0; i < USUARIOS; i++) {
+        if (strlen(USERS[i]) > 0) { // Verifica se o usuário não está vazio
+            gotoxy(50, 8 + i); // Posiciona cada usuário em uma nova linha
+            printf("  Usuário: %s - Senha: %s\n", USERS[i], SENHAS[i]);
+            encontrado = 1; // Marca que pelo menos um usuário foi encontrado
+        }
+    }
+
+    if (!encontrado) {
+        gotoxy(50, 8); // Posiciona a mensagem se não houver usuários
+        printf("| Nenhum usuário cadastrado.           |\n");
+    }
+
+    gotoxy(51, 9 + USUARIOS); // Posiciona o cursor após a lista de usuários
+    printf("|_______________________________________|\n");
+    gotoxy(51, 10 + USUARIOS); // Linha para finalizar a tabela
+    printf("Pressione qualquer tecla para voltar ao menu...");
+    getch(); // Espera o usuário pressionar uma tecla
+
+    system("cls");
+}
+
+char* validar_tamanho(int x, int y) {
+    static char tamanhoU[22];  // Usando static para manter o valor após a função retornar
+
+
+
+
+    do {
+        Limpa_linha(x + 1, y + 13, 38);
+        Limpa_linha(x + 1, y + 14, 38);
+        Limpa_linha(x + 1, y + 15, 38);
+        gotoxy(x + 1, y + 14);
+        printf("Digite o nome de usuário: ");
+        gotoxy(x + 1, y + 10);
+        fgets(tamanhoU, sizeof(tamanhoU), stdin);
+        tamanhoU[strcspn(tamanhoU, "\n")] = '\0';  // Remove o '\n'
+        Limpa_linha(x + 1, y + 10, 38);
+        Limpa_linha(x + 1, y + 14, 38);
+        loading(51, 25, 32);
+
+        // Validação do tamanho do nome de usuário
+        if (strlen(tamanhoU) > 20) {
+            Limpa_linha(x + 1, y + 14 , 38);
+            gotoxy(x + 1, y + 14);
+            printf("O usuário deve conter no máximo\n");
+            gotoxy(x + 1, y + 15);
+            printf("20 caracteres!");
+            Sleep(1500);
+        }
+
+    } while(strlen(tamanhoU) > 20 || strlen(tamanhoU) == 0); // Adicionando também a validação para não permitir entradas vazias
+
+    return tamanhoU;  // Retorna o ponteiro para a string
+}
+//------------------------------------------------------------
+void inter_L(int x, int y, char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS]){
+
+char usuario[T_USUARIOS];
+char senha[T_SENHAS];
+int tentativas = 0;
+
+
+Limpa_buffer();
+while (tentativas < 3){
+
+cores(11);
+gotoxy(x,y);
+printf("________________________________________ \n");
+gotoxy(x,y + 1);
+printf("|                 LOGIN                 |\n");
+gotoxy(x,y + 2);
+printf("|_______________________________________|\n");
+gotoxy(x,y + 3);
+printf("|                                       |\n");
+gotoxy(x,y + 4);
+printf("|                                       |\n");
+gotoxy(x,y + 5);
+printf("|                USUÁRIO                |\n");
+gotoxy(x,y + 6);
+printf("|                                       |\n");
+gotoxy(x,y + 7);
+printf("|                                       |\n");
+gotoxy(x,y + 8);
+printf("|_______________________________________|\n");
+gotoxy(x,y + 9);
+printf("|                                       |\n");
+gotoxy(x,y + 10);
+printf("|                                       |\n");
+gotoxy(x,y + 11);
+printf("|_______________________________________|\n");
+gotoxy(x,y + 12);
+printf("|                                       |\n");
+gotoxy(x,y + 13);
+printf("|                                       |\n");
+gotoxy(x,y + 14);
+printf("|                                       |\n");
+gotoxy(x,y + 15);
+printf("|                                       |\n");
+gotoxy(x,y + 16);
+printf("|_______________________________________| \n");
+
+	gotoxy(x + 1, y + 14);
+	printf("Informe o usuário.\n ");
+	gotoxy(x + 1, y + 10);
+	fgets(usuario, sizeof(usuario), stdin);
+	usuario[strcspn(usuario, "\n")] = '\0';
+	Limpa_linha(x + 1, y + 14, 38);
+	Limpa_linha(x + 1, y + 10, 38);
+	loading(x + 1, y + 15, 32);
+
+	gotoxy(x + 1, y + 14);
+	printf("Informe a senha \n ");
+	gotoxy(x + 1, y + 10);
+	fgets(senha, sizeof(senha), stdin);
+	senha[strcspn(senha, "\n")] = '\0';
+	Limpa_linha(x + 1, y + 14, 38);
+	Limpa_linha(x + 1, y + 10, 38);
+	loading(x + 1, y + 15, 38);
+
+    int usuario_valido = 0; // Flag para verificar se o usuário foi encontrado
+    for (int i = 0; i < USUARIOS; i++) {
+        if (strcmp(usuario, USERS[i]) == 0 && strcmp(senha, SENHAS[i]) == 0) {
+            usuario_valido = 1; // Usuário e senha válidos
+            break; // Sai do loop se encontrar o usuário
+        }
+    }
+
+    Limpa_linha(x + 1, y + 14, 38);
+    Limpa_linha(x + 1, y + 15, 38);
+    if (usuario_valido) {
+        gotoxy(x + 1, y + 14);
+        printf("Login realizado com sucesso!");
+        Sleep(2000); // Tempo para a mensagem ser lida
+        return;
+    } else {
+        Limpa_linha(x + 1, y + 10, 38);
+        tentativas++; // Incrementa o contador de tentativas
+        gotoxy(x + 1, y + 14);
+        printf("Usuário ou senha inválidos.");
+        gotoxy(x + 1, y + 15);
+        printf("Tentativa %d de 3.", tentativas);
+        Sleep(1500); // Tempo para a mensagem ser lida
+    }
+
+            // Verifica se o número de tentativas excedeu 3
+        if (tentativas >= 3) {
+            Limpa_linha(x + 1, y + 14, 38);
+            Limpa_linha(x + 1, y + 15, 38);
+            gotoxy(x + 1, y + 14);
+            printf("Tentativas expiradas.");
+            Sleep(1500);
+            Limpa_linha(x + 1, y + 14, 38);
+            gotoxy(x + 1, y + 14);
+            printf("Altere sua senha.");
+            Sleep(1000);
+            troca_senha(x, y, USERS, SENHAS);
+        }
+
+    }
+
+}
+
+//------------------------------------------------------------------
+int valid_pass(char senha[12], int x, int y){
+int has_digit = 0;
+int caracE = 0;
+
+
+
+    Limpa_linha(x + 1, y + 13, 38);
+    Limpa_linha(x + 1, y + 15, 38);
+
+
+    if (strlen(senha) == 0) {
+        Limpa_linha(x + 1, y + 14, 38);
+        gotoxy(x + 1, y + 14);
+        printf("Por favor, insira pelo menos");
+        gotoxy(x + 1, y + 15);
+        printf("um caracter.");
+        return 1;
+     }
+
+     if (strlen(senha) > 11) {
+        Limpa_linha(x + 1, y + 14, 38);
+        gotoxy(x + 1, y + 14);
+        printf("A senha não pode ter mais de");
+        gotoxy(x + 1, y + 15);
+        printf("%d caracteres.", T_SENHAS);
+        Limpa_buffer();
+        return 1;
+
+     }
+
+    for (int i = 0; i < strlen(senha); i++) {
+        if (senha[i] == ' ') {
+            Limpa_linha(x + 1, y + 14, 38);
+            gotoxy(x + 1, y + 14);
+            printf("A senha não pode conter espaços.");
+            return 1;
+        }
+
+        if (isdigit(senha[i])) {
+            has_digit = 1;
+        }
+
+        if (ispunct(senha[i])) {
+            caracE = 1;
+        }
+    }
+
+    if (!has_digit) {
+        Limpa_linha(x + 1, y + 14, 38);
+        gotoxy(x + 1, y + 14);
+        printf("A senha deve conter um número.");
+        return 1;
+    }
+
+    if (!caracE) {
+        Limpa_linha(x + 1, y + 14, 38);
+        gotoxy(x + 1, y + 14);
+        printf("A senha deve conter pelo menos \n");
+        gotoxy(x + 1, y + 15);
+        printf("um caractere especial.");
+        return 1;
+	}
+
+		return 0;
+}
+//----------------------------------------------------
+void loading(int x, int y, int esp){
+char point[14] = "CARREGANDO...";
+int z, i;
+
+ for(z = 0; z < 3; z++){
+		   gotoxy(x, y);       //51 e 25
+			for(i = 0; i < 13; i++){
+			printf("%c", point[i]);
+				Sleep(40);
+
+			}
+
+			Limpa_linha(x, y, esp);
+		}
+}
+
+//-------------------------------------------------------------------
+void cores(int cor) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), cor);
+}
+//-----------------------------------------------------------------
+void gotoxy(int x, int y) {
+
+COORD cord;
+
+	cord.X = x - 1;
+	cord.Y = y - 1;
+
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), cord);
+
+}
+//---------------------------------------------------------------------
+
+void Limpa_linha(int x, int y, int quant_Espacos){
+int z;
+
+	gotoxy(x,y);
+	for(z = 0; z < quant_Espacos; z++)
+	printf(" ");
+}
+//--------------------------------------------------------------------
+
+int valid_user(char usuario[21], int x, int y, char USERS[USUARIOS][T_USUARIOS]) {
+int has_digit = 0;
+int caracE = 0;
+
+
+
+    Limpa_linha(x + 1, y + 13, 38);
+    Limpa_linha(x + 1, y + 15, 38);
+
+
+    if(usuario_existe(USERS, usuario)){
+        gotoxy(x + 1, y + 14);
+        printf("O usuário já existe.");
+        return 1;
+    }
+
+    if (strlen(usuario) == 0) {
+        Limpa_linha(x + 1, y + 14, 38);
+        gotoxy(x + 1, y + 14);
+        printf("Por favor, insira pelo menos");
+        gotoxy(x + 1, y + 15);
+        printf("um caracter.");
+        return 1;
+    }
+
+    for (int i = 0; i < strlen(usuario); i++) {
+        if (usuario[i] == ' ') {
+            Limpa_linha(x + 1, y + 14, 38);
+            gotoxy(x + 1, y + 14);
+            printf("O usuário não pode conter espaços.");
+            return 1;
+        }
+
+        if (isdigit(usuario[i])) {
+            has_digit = 1;
+        }
+
+        if (ispunct(usuario[i])) {
+            caracE = 1;
+        }
+    }
+
+    if (!has_digit) {
+        Limpa_linha(x + 1, y + 14, 38);
+        gotoxy(x + 1, y + 14);
+        printf("O usuário deve conter um número.");
+        return 1;
+    }
+
+    if (!caracE) {
+        Limpa_linha(x + 1, y + 14, 38);
+        gotoxy(x + 1, y + 14);
+        printf("O usuário deve conter pelo menos \n");
+        gotoxy(x + 1, y + 15);
+        printf("um caractere especial.");
+        return 1;
+    }
+
+    Limpa_linha(x + 1, y + 13, 38);
+    Limpa_linha(x + 1, y + 15, 38);
+    Limpa_linha(x + 1, y + 14, 38);
+
+    return 0; // Retorna 0 se o usuário é válido
+}
+
+//-------------------------------------------------------------------
+int inter_M(int x, int y, int esc){
+
+
+
+                                                                  // INTERFACE DE MENU, ONDE O USUÁRIO VAI ESCOLHER AS OPÇÕES (CADASTRO E LOGIN)...
+int i, z;
+int resultado;
+
+cores(11);
+gotoxy(x,y);
+printf("________________________________________ \n");
+gotoxy(x,y + 1);
+printf("|                 MENU                  |\n");
+gotoxy(x,y + 2);
+printf("|_______________________________________|\n");
+gotoxy(x,y + 3);
+printf("|                                       |\n");
+gotoxy(x,y + 4);
+printf("|                                       |\n");
+gotoxy(x,y + 5);
+printf("|_______________________________________|\n");
+gotoxy(x,y + 6);
+printf("|                                       |\n");
+gotoxy(x,y + 7);
+printf("|                                       |\n");
+gotoxy(x,y + 8);
+printf("|[1]LOGIN                               |\n");
+gotoxy(x,y + 9);
+printf("|                                       |\n");
+gotoxy(x,y + 10);
+printf("|[2]CADASTRE-SE                         |\n");
+gotoxy(x,y + 11);
+printf("|                                       |\n");
+gotoxy(x,y + 12);
+printf("|[3]ENTRAR COMO ADM                     |\n");
+gotoxy(x,y + 13);
+printf("|                                       |\n");
+gotoxy(x,y + 14);
+printf("|_______________________________________|\n");
+gotoxy(x,y + 15);
+printf("|                                       |\n");
+gotoxy(x,y + 16);
+printf("|_______________________________________| \n");
+
+
+
+		while (1) {
+        gotoxy(51, 25);
+        printf("POR FAVOR, ESCOLHA UMA OPÇÃO: ");
+
+
+        // Lê a entrada do usuário
+        if (scanf("%d", &esc) != 1) {
+            Limpa_linha(51, 25, 39);
+            loading(51, 25, 32);
+            // Se a entrada não for válida
+            Limpa_linha(51, 25, 39);
+            gotoxy(51, 25);
+            printf("OPÇÃO INVÁLIDA!");
+            Sleep(1000); // Espera um segundo
+            Limpa_linha(51, 25, 39); // Limpa a linha
+            while (getchar() != '\n'); // Limpa o buffer de entrada do teclado até nova linha
+            continue; // Volta para o início do laço
+        }
+
+        // Verifica se esc é 1, 2 ou 3
+        if (esc != 1 && esc != 2 && esc != 3) {
+            Limpa_linha(51, 25, 39);
+            loading(51, 25, 32);
+            gotoxy(51, 25);
+            printf("OPÇÃO INVÁLIDA!");
+            Sleep(1000); // Espera um segundo
+            Limpa_linha(51, 25, 39); // Limpa a linha
+            continue; // Volta para o início do loop
+        }
+
+        // Se a entrada for válida, sai do loop
+        break;
+
+    }
+        return(esc);
+
+}
+
+//---------------------------------------------------------------
+
+void inter_C(int x, int y, char USERS[USUARIOS][T_USUARIOS], char SENHAS[USUARIOS][T_SENHAS], int indice) {
+
+    if (indice < 0 || indice >= USUARIOS) {
+        cores(12);
+        printf("Limíte de Usuário exedido!\n");
+        Sleep(1500);
+        Limpa_linha(x, y + 13, 38);
+        return; // Sai da função se o índice for inválido
+    }
+
+
+    char usuario[21];  // Tamanho máximo de 20 caracteres + 1 para o '\0'
+    char senha[13];  // Tamanho máximo de 12 caracteres + 1 para o '\0'
+    char senha_confirma[13]; // Novo campo para confirmação
+
+    int valido = - 1;
+    int valido_S;
+
+    cores(11);
+    gotoxy(x, y);
+    printf("________________________________________ \n");
+    gotoxy(x, y + 1);
+    printf("|                CADASTRO               |\n");
+    gotoxy(x, y + 2);
+    printf("|_______________________________________|\n");
+    gotoxy(x, y + 3);
+    printf("|                                       |\n");
+    gotoxy(x, y + 4);
+    printf("|                                       |\n");
+    gotoxy(x, y + 5);
+    printf("|                USUÁRIO                |\n");
+    gotoxy(x, y + 6);
+    printf("|                                       |\n");
+    gotoxy(x, y + 7);
+    printf("|                                       |\n");
+    gotoxy(x, y + 8);
+    printf("|_______________________________________|\n");
+    gotoxy(x, y + 9);
+    printf("|                                       |\n");
+    gotoxy(x, y + 10);
+    printf("|                                       |\n");
+    gotoxy(x, y + 11);
+    printf("|_______________________________________|\n");
+    gotoxy(x, y + 12);
+    printf("|                                       |\n");
+    gotoxy(x, y + 13);
+    printf("|                                       |\n");
+    gotoxy(x, y + 14);
+    printf("|                                       |\n");
+    gotoxy(x, y + 15);
+    printf("|                                       |\n");
+    gotoxy(x, y + 16);
+    printf("|_______________________________________| \n");
+
+    gotoxy(x + 1, y + 13);
+    printf("OBS: Tamanho máximo de 20 caracteres. \n");
+    gotoxy(x + 1, y + 14);
+    printf("Incluir um caracter especial e número.\n ");
+    Sleep(2000);
+
+
+    while (1) {
+        strcpy(usuario, validar_tamanho(50, 10));  // Copia o nome de usuário validado
+
+        // Verifica se o nome de usuário é válido antes de continuar
+        if (strlen(usuario) <= 20) {
+            valido = valid_user(usuario, x, y, USERS);
+            if (valido == 0) {
+                break; // Sai do loop se o usuário for válido
+            }
+        } else {
+            Sleep(1500);
+
+        }
+        Sleep(1000);
+        continue;
+    }
+
+
+        gotoxy(51, 24);
+        printf("Usuário válido!\n");
+        Sleep(1000);
+        Limpa_linha(x + 1, y + 13, 39);
+        Limpa_linha(x + 1, y + 14, 39);
+        Limpa_linha(x + 1, y + 15, 39);
+        Limpa_linha(x + 1, y + 10, 39);
+
+        Limpa_linha(x + 1, y + 5, 38);
+        gotoxy(51, 15);
+        printf("                 SENHA");
+
+        gotoxy(x + 1, y + 13);
+        printf("OBS: Tamanho máximo de 12 caracteres. \n");
+        gotoxy(x + 1, y + 14);
+        printf("Incluir um caracter especial e número.\n ");
+        Sleep(2000);
+
+    do {
+        Limpa_linha(x + 1, y + 13, 38);
+        Limpa_linha(x + 1, y + 14, 38);
+        Limpa_linha(x + 1, y + 15, 38);
+        Limpa_linha(x + 1, y + 10, 38);
+
+        gotoxy(x + 1, y + 14);
+        printf("Digite a senha do usuário: ");
+        gotoxy(x + 1, y + 10);
+        fgets(senha, sizeof(senha), stdin);
+        senha[strcspn(senha, "\n")] = '\0';  // Remove o '\n'
+        Limpa_linha(x + 1, y + 14, 38);
+        Limpa_linha(x + 1, y + 10, 38);
+
+        // Verifica se a senha é igual ao usuário
+        if (strcmp(usuario, senha) == 0) {
+            gotoxy(x + 1, y + 14);
+            printf("A senha não pode ser igual ao usuário.");
+            Sleep(1500);
+            continue;  // Continua pedindo a senha
+        }
+
+        // Validação da senha (implementada em outra função)
+        loading(51, 25, 32);
+        valido_S = valid_pass(senha, x, y);
+
+        if (valido_S != 0) {
+            Sleep(2000);
+        }
+
+    } while (valido_S != 0);
+
+        // Solicitar confirmação da senha
+        Limpa_linha(x + 1, y + 13, 38);
+        Limpa_linha(x + 1, y + 14, 38);
+        Limpa_linha(x + 1, y + 15, 38);
+        Limpa_linha(x + 1, y + 10, 38);
+    do {
+        gotoxy(x + 1, y + 14);
+        printf("Confirme a senha: ");
+        gotoxy(x + 1, y + 10);
+        fgets(senha_confirma, sizeof(senha_confirma), stdin);
+        senha_confirma[strcspn(senha_confirma, "\n")] = '\0';  // Remove o '\n'
+
+        if (strcmp(senha, senha_confirma) != 0) {
+            Limpa_linha(x + 1, y + 10, 38);
+            gotoxy(x + 1, y + 14);
+            printf("As senhas não conferem!");
+            Sleep(1500);
+            Limpa_linha(x + 1, y + 14, 38);
+            gotoxy(x + 1, y + 14);
+            printf("Tente novamente.");
+            Sleep(1500);
+            Limpa_linha(x + 1, y + 14, 38);
+            continue;
+        }
+
+    } while (strcmp(senha, senha_confirma) != 0);
+
+        Limpa_linha(x + 1, y + 13, 38);
+        Limpa_linha(x + 1, y + 14, 38);
+        Limpa_linha(x + 1, y + 15, 38);
+        Limpa_linha(x + 1, y + 10, 38);
+
+        gotoxy(51, 24);
+        strcpy(USERS[indice], usuario);
+        strcpy(SENHAS[indice], senha);
+        printf("Senha válida!\n");
+        Sleep(1000);
+        Limpa_linha(x + 1, y + 14, 38);
+        gotoxy(51, 24);
+        printf("CADASTRO REALIZADO.");
+        Sleep(1500);
+
+
+}
+
+//--------------------------------------------------------------
+
+int main () {
+    int esc = 0;
+    int x, i;
+    char point[11] = "carregando";
+    char USERS[USUARIOS][T_USUARIOS] = {0};
+    char SENHAS[USUARIOS][T_SENHAS] = {0};
+    char permitidos[USUARIOS][T_USUARIOS] = {0};
+
+    setlocale(LC_ALL, "Portuguese");
+
+    // Carrega dados do arquivo ao iniciar
+    carregar_dados(USERS, SENHAS);
+
+    while (1) { // Loop principal
+        esc = inter_M(50, 10, esc);
+
+        switch (esc) {
+            case 1:
+                system("cls");
+                inter_L(50, 10, USERS, SENHAS);
+                break;
+
+            case 2:
+                for (i = 0; i < USUARIOS; i++) {
+                    if (strlen(USERS[i]) > 0) {
+                        continue; // Se já existe um usuário aqui, pula para o próximo índice
+                    }
+
+                    inter_C(50, 10, USERS, SENHAS, i);
+                    char op;
+                    salvar_dados(USERS, SENHAS);
+                    gotoxy(51, 23);
+                    printf("Deseja voltar ao menu? Aperte 'S' para \n");
+                    gotoxy(51, 24);
+                    printf("SIM e 'N' para NÃO. ");
+                    Sleep(2000);
+
+                    op = getche();
+                    Limpa_linha(51, 23, 39);
+                    Limpa_linha(51, 24, 39);
+                    if (op == 's' || op == 'S') {
+                        break; // Sai do loop se o usuário quiser voltar ao menu
+                    } else if (op == 'n' || op == 'N') {
+                        // Não faz nada, o loop continuará para tentar cadastrar outro usuário
+                    } else {
+                        // Se a entrada não for válida, repetir a pergunta
+                        gotoxy(51, 23);
+                        printf("Opção inválida, retornando ao menu.");
+                        Sleep(1000);
+                        break; // Sai do loop
+                    }
+                }
+                break;
+
+            case 3:
+                system("cls");
+                getchar();
+                inter_ADM(50, 10, permitidos, USERS, SENHAS);
+                break;
+
+
+                break;
+
+            default:
+                printf("Opção inválida.\n");
+                break;
+        }
+    }
+
+
+    return 0;
+}
+
+
